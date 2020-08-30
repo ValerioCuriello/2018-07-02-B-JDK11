@@ -7,9 +7,11 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import it.polito.tdp.extflightdelays.model.Airline;
 import it.polito.tdp.extflightdelays.model.Airport;
+import it.polito.tdp.extflightdelays.model.Arco;
 import it.polito.tdp.extflightdelays.model.Flight;
 
 public class ExtFlightDelaysDAO {
@@ -38,7 +40,7 @@ public class ExtFlightDelaysDAO {
 	}
 
 	public List<Airport> loadAllAirports() {
-		String sql = "SELECT * FROM airports";
+		String sql = "select * from airports order by airports.`AIRPORT` ASC";
 		List<Airport> result = new ArrayList<Airport>();
 
 		try {
@@ -91,4 +93,91 @@ public class ExtFlightDelaysDAO {
 			throw new RuntimeException("Error Connection Database");
 		}
 	}
+	
+	
+		public void getAereoporti(Map<Integer,Integer> m) {
+			String sql = "select distinct f.`DESTINATION_AIRPORT_ID` as id , count(f.`ID`) as cnt " + 
+					"from flights as f " + 
+					"group by f.`DESTINATION_AIRPORT_ID`" ;
+			try {
+				Connection conn = ConnectDB.getConnection();
+				PreparedStatement st = conn.prepareStatement(sql);
+				ResultSet rs = st.executeQuery();
+	
+				while (rs.next()) {
+					if(!m.containsKey(rs.getInt("id"))) {
+						m.put(rs.getInt("id"), rs.getInt("cnt")) ;
+					}
+					else {
+						int valore = m.get(rs.getInt("id"));
+						m.put(rs.getInt("id"), valore+rs.getInt("cnt"));
+					
+				}
+			
+				}
+			}	
+			catch (SQLException e) {
+				e.printStackTrace();
+				System.out.println("Errore connessione al database");
+				throw new RuntimeException("Error Connection Database");
+			}
+		
+		
+	}
+		public void getAereoporti2(Map<Integer,Integer> m) {
+			String sql = "select distinct f.`ORIGIN_AIRPORT_ID` as id, count(f.`ID`) as cnt " + 
+					"from flights as f " + 
+					"group by f.`ORIGIN_AIRPORT_ID`" ;
+			try {
+				Connection conn = ConnectDB.getConnection();
+				PreparedStatement st = conn.prepareStatement(sql);
+				ResultSet rs = st.executeQuery();
+	
+				while (rs.next()) {
+					if(!m.containsKey(rs.getInt("id"))) {
+						m.put(rs.getInt("id"), rs.getInt("cnt")) ;
+					}
+					else {
+						int valore = m.get(rs.getInt("id"));
+						m.put(rs.getInt("id"), valore+rs.getInt("cnt"));
+					
+				}
+			
+				}
+			}	
+			catch (SQLException e) {
+				e.printStackTrace();
+				System.out.println("Errore connessione al database");
+				throw new RuntimeException("Error Connection Database");
+			}
+		
+		
+	}
+		
+		public List<Arco> getArchi(){
+			String sql = "select f.`ORIGIN_AIRPORT_ID` as ap, f.`DESTINATION_AIRPORT_ID` as aa , avg(f.`ELAPSED_TIME`) as avg " + 
+					"from flights as f " + 
+					"group by f.`ORIGIN_AIRPORT_ID`, f.`DESTINATION_AIRPORT_ID`" ;
+			
+			List<Arco> archi = new LinkedList<Arco>();
+			
+			try {
+				Connection conn = ConnectDB.getConnection();
+				PreparedStatement st = conn.prepareStatement(sql);
+				ResultSet rs = st.executeQuery();
+
+				while (rs.next()) {
+					Arco arco = new Arco(rs.getInt("ap"), rs.getInt("aa"), rs.getDouble("avg")) ;
+					archi.add(arco);
+				}
+
+				conn.close();
+				return archi;
+
+			} catch (SQLException e) {
+				e.printStackTrace();
+				System.out.println("Errore connessione al database");
+				throw new RuntimeException("Error Connection Database");
+			}
+		}
 }
